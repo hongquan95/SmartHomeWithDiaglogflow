@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <% include ../partials/head %>
+</head>
+<body>
+    <div>        
+        <h1>Google Request</h1>
+        <pre id="json"></pre>
+        <script>
+                getRes = JSON.parse('<%- JSON.stringify(google) %>');
+                getResJson = JSON.stringify(getRes,null,3);
+                document.getElementById("json").innerHTML = getResJson;
+        </script>
+        <h1>Blynk Response</h1>
+        <pre id="json2"></pre>
+        <script>
+                getRes2 = JSON.parse('<%- JSON.stringify(blynk) %>');
+                getResJson2 = JSON.stringify(getRes2,null,3);
+                document.getElementById("json2").innerHTML = getResJson2;
+        </script>
+    </div>
+</body>
+</html>
