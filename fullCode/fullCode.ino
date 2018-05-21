@@ -1,5 +1,3 @@
-
-#define BLYNK_PRINT Serial
 #include <ESP8266WiFi.h>
 #include <BlynkSimpleEsp8266.h>
 #include <WidgetRTC.h>
@@ -31,8 +29,9 @@
 #define VallDevice V19
 #define VcheckAll V11
 #define VsendStt V12
+#define VdeviceB V14
 
-
+#define VlightDisplay V20
 
 #define VselectDeviceTimer V15
 #define VshowFanTimer V16
@@ -41,6 +40,7 @@
 #define VreadAppTimer V23
 #define VreadGoogleTimerStart V24
 #define VreadGoogleTimerStop V25
+#define VlightRes V26
 
 
 #define Vtemp V30
@@ -49,6 +49,8 @@
 #define Vgas V33
 
 #define lightSensor A0
+#define asInt param.asInt()
+#define asStr param.asStr()
 
 
 //---------------define varible and const-------------//
@@ -68,49 +70,64 @@ int VdisplayTimer[3] = {VshowFanTimer, VshowHeaterTimer, VshowAirConditionerTime
 String device[3] = {"fan", "heater", "air_conditioner"};
 String stt[2] = {"on", "off"};
 String state[2] = {"opened", "closed"};
-uint8_t Dpin[2] = {Dfan, Dheater};
+uint8_t Dpin[3] = {Dfan, Dheater,DairConditioner};
 uint8_t led[4] ={DledLivingRoom, DledBedRoom, DledKitchen, DledBathRoom };
+int Vled[4]={VledLivingRoom, VledBedRoom, VledKitchen, VledBathRoom};
+
 uint8_t Ddivice[3] = {Dfan, Dheater, DairConditioner};
 int n = 3;
 int deviceSelect = 0;
-char auth[] = "eac41632ae5c4a8eba8bdc2cfb1def5c";
-char tokenB[] = "013087bd76e74f81b0c32caa2528e8fe"; //from Tapit.vn
+char auth[] = "e2166f454dfc4e7493d15cbd0ebceabf";
+char tokenB[] = "83486216d8ba48ee977e621c6be720a1"; //from Tapit.vn
 //char ssid[] = "TOP";  //Tên wifi
 //char pass[] = "0968457018";     //Mật khẩu wifi
 char ssid[] = "NT98_A3";  //Tên wifi
 char pass[] = "568568568";     //Mật khẩu wifi
 char host[] = "tapit.vn";
-WidgetBridge bridge1(V14);
+WidgetBridge bridge1(VdeviceB);
 Servo myServoDoor, myServoWindow;  // create servo object to control a servo 
 
 int x[4];
 int y[3];
 int z[2];
 int h,t,g;
+int lightThresh = 300;
 String b = "";
 
 //--------Turn all device-----------//
 BLYNK_WRITE(VallDevice)
   {
-    String i = param.asStr();
+    String i = asStr;
     if (i == "0")
     {
-      for (int i = 0 ; i < 4; i ++)
+      for (int i = 0 ; i < 4; i ++) {
         digitalWrite(led[i], LOW);
-      for (int i = 0 ; i < 3; i ++)
+        Blynk.virtualWrite(Vled[i],LOW);
+      }
+      for (int i = 0 ; i < 3; i ++) {
         digitalWrite(Ddivice[i], LOW);
+        Blynk.virtualWrite(Vpin[i],LOW);
+      }
       myServoDoor.write(100);
+      Blynk.virtualWrite(Vdoor,LOW);
       myServoWindow.write(100);
+      Blynk.virtualWrite(Vwindow,LOW);
       Blynk.virtualWrite(VallDevice,"2");
     }
     if (i == "1")
     {
-      for (int i = 0 ; i < 4; i ++)
+      for (int i = 0 ; i < 4; i ++){
         digitalWrite(led[i], HIGH);
-      for (int i = 0 ; i < 3; i ++)
+        Blynk.virtualWrite(Vled[i],HIGH);
+      }
+      for (int i = 0 ; i < 3; i ++){
         digitalWrite(Ddivice[i], HIGH);
+        Blynk.virtualWrite(Vpin[i],HIGH);
+      }
       myServoDoor.write(10);
+      Blynk.virtualWrite(Vdoor,HIGH);
       myServoWindow.write(10);
+      Blynk.virtualWrite(Vwindow,HIGH);
       Blynk.virtualWrite(VallDevice,"2"); 
    }
   }
@@ -118,7 +135,7 @@ BLYNK_WRITE(VallDevice)
   //--------Check all status----//
  BLYNK_WRITE(VcheckAll)
   {
-    String i = param.asStr();
+    String i = asStr;
     if (i == "0")
     {  
       String allStt = "{" + b + "}";
@@ -144,60 +161,51 @@ BLYNK_CONNECTED() {
 
 //-----Led Living-----//
 BLYNK_WRITE(VledLivingRoom){
- int stt = param.asInt();
- Serial.println(stt);
- digitalWrite(DledLivingRoom,stt);
+  int stt = asInt;
+  digitalWrite(DledLivingRoom,stt);
 }
 
 //-----Led BedRoom-----//
 BLYNK_WRITE(VledBedRoom){
- int stt = param.asInt();
- Serial.println(stt);
+  int stt = asInt;
  digitalWrite(DledBedRoom,stt);
 }
 
-
 //-----Led Kitchen -----//
 BLYNK_WRITE(VledKitchen){
- int stt = param.asInt();
- Serial.println(stt);
- digitalWrite(DledKitchen,stt);
+  int stt = asInt;
+  digitalWrite(DledKitchen,stt);
 }
 
 //-----Led BathRoom-----//
 BLYNK_WRITE(VledBathRoom){
- int stt = param.asInt();
- Serial.println(stt);
- digitalWrite(DledBathRoom,stt);
+  int stt = asInt;
+  digitalWrite(DledBathRoom,stt);
 }
 
 //-----Fan -----//
 BLYNK_WRITE(Vfan){
- int stt = param.asInt();
- Serial.println(stt);
+ int stt = asInt;
  digitalWrite(Dfan,stt);
 }
 
 //-----Heater -----//
 BLYNK_WRITE(Vheater){
- int stt = param.asInt();
- Serial.println(stt);
+ int stt = asInt;
  digitalWrite(Dheater,stt);
 
 }
 //-----AirConditioner -----//
 BLYNK_WRITE(VairConditioner){
- int stt = param.asInt();
- Serial.println(stt);
+ int stt = asInt;
  digitalWrite(DairConditioner,stt);
 
 }
 //-----Temp -----//
 BLYNK_WRITE(Vtemp)
 {
-  t = param.asInt();
-  Serial.println("Temp recieve from B " + String(t));
-  if (t >=35) {
+  t = asInt;
+  if (t >=42) {
     checkStt();
     digitalWrite(Dspeaker,1);
     Blynk.notify("Cảnh báo: Nhiệt độ quá cao");
@@ -212,53 +220,47 @@ BLYNK_WRITE(Vtemp)
 //--------Humidy-------//
 BLYNK_WRITE(Vhumidi)
 { 
-  h = param.asInt();
-  Serial.println("Humidi recieve from B " + String(h));
+  h = asInt;
 }
 
 //---------Read gas sensor------//
 BLYNK_WRITE(Vgas) {
-  g = param.asInt();
-  Serial.println("Gas recieve from B " + String(g));
+  g = asInt;
 }
 
 //---------Door-----------//
 BLYNK_WRITE(Vdoor){
-  z[0] = param.asInt();
+  z[0] = asInt;
  if (z[0] == 0)
   {
-    if (analogRead(lightSensor) < 300) {
+    if (analogRead(lightSensor) < lightThresh) {
       digitalWrite(DledLivingRoom, LOW);
       Blynk.virtualWrite(VledLivingRoom,LOW);
     }
     myServoDoor.write(100); 
-  Serial.println("door open " + String(100));
   }
  else if (z[0] == 1 )
   {
     myServoDoor.write(10);
-  Serial.println("door close " + String(10));
   } 
 }
 
 //-----------Window--------//
 BLYNK_WRITE(Vwindow){
-  z[1] = param.asInt();
+  z[1] = asInt;
  if (z[1] == 0)
   {
     myServoWindow.write(100); 
-  Serial.println("window  open " + String(100));
   }
- else if (z[0] == 1 )
+ else if (z[1] == 1 )
   {
     myServoWindow.write(10);
-  Serial.println("window close " + String(10));
   } 
 }
 
 //----------Gas Alert----------------//
 BLYNK_WRITE(VgasStt) {
-  int stt = param.asInt();
+  int stt = asInt;
   if (stt == LOW) {
     checkStt();
     digitalWrite(Dspeaker,1);
@@ -277,7 +279,6 @@ BLYNK_WRITE(VreadAppTimer) {
   TimeInputParam t(param);
   // Process start time
   int n = deviceSelect-1;
-  Serial.println("n = " + String(n));
   if (t.hasStartTime() && n >= 0 ){
     timeInputStart[n].hh = t.getStartHour();
     timeInputStart[n].mm = t.getStartMinute();
@@ -288,7 +289,6 @@ BLYNK_WRITE(VreadAppTimer) {
   }
   String stt = "The " + device[n] + " on at " + String( timeInputStart[n].hh) + ":" +  String( timeInputStart[n].mm) + 
     ", off at " + String( timeInputStop[n].hh) + ":" +  String( timeInputStop[n].mm);
-  Serial.println("Stt = " + stt);
   Blynk.virtualWrite(VdisplayTimer[n],stt);
   deviceSelect = 0;
   Blynk.virtualWrite(VselectDeviceTimer,"Select Device");
@@ -298,12 +298,13 @@ BLYNK_WRITE(VreadAppTimer) {
 
 //-----Read device from app---------//
 BLYNK_WRITE(VselectDeviceTimer) {
-   deviceSelect = param.asInt();
+  deviceSelect = asInt;
+  Blynk.virtualWrite(V0,deviceSelect-1);
 }
 
 //----Read TimeStart and device from Google------//
 BLYNK_WRITE(VreadGoogleTimerStart){
-  String voiceTimeStartStr = param.asStr();
+  String voiceTimeStartStr = asStr;
   int deviceNum = voiceTimeStartStr.substring(6,7).toInt();
   timeInputStart[deviceNum].hh = voiceTimeStartStr.substring(0,2).toInt();
   timeInputStart[deviceNum].mm = voiceTimeStartStr.substring(3,5).toInt();
@@ -314,14 +315,12 @@ BLYNK_WRITE(VreadGoogleTimerStart){
   else
     stt = "The " + device[deviceNum] + " on at " + String( timeInputStart[deviceNum].hh) + ":" +  String( timeInputStart[deviceNum].mm);
 
-
-    Serial.println(stt);
   Blynk.virtualWrite(VdisplayTimer[deviceNum],stt);
 }
 
 //----Read TimeStop and device from Google------//
 BLYNK_WRITE(VreadGoogleTimerStop){
-  String voiceTimeStopStr = param.asStr();
+  String voiceTimeStopStr = asStr;
   int deviceNum = voiceTimeStopStr.substring(6,7).toInt();
   timeInputStop[deviceNum].hh = voiceTimeStopStr.substring(0,2).toInt();
   timeInputStop[deviceNum].mm = voiceTimeStopStr.substring(3,5).toInt();
@@ -331,20 +330,20 @@ BLYNK_WRITE(VreadGoogleTimerStop){
       String( timeInputStart[deviceNum].mm) + ", off at " + String( timeInputStop[deviceNum].hh) + ":" +  String( timeInputStop[deviceNum].mm);
   else
     stt = "The " + device[deviceNum] +  " off at " + String( timeInputStop[deviceNum].hh) + ":" +  String( timeInputStop[deviceNum].mm);
-    Serial.println(stt);
+     
   Blynk.virtualWrite(VdisplayTimer[deviceNum],stt);
 }
 void setup()
 {
    
   // Debug console
-  Serial.begin(9600);
   Blynk.begin(auth, ssid, pass,host);
   pinMode(Dspeaker,OUTPUT);//loa
   for (int i = 0 ; i < 4 ; i ++)
     pinMode(led[i], OUTPUT);
   for (int i = 0 ; i < 3 ; i ++)
     pinMode(Ddivice[i],OUTPUT);
+  pinMode(DledYard, OUTPUT);
   myServoDoor.attach(Ddoor);  // attaches the servo on GIO2 to the servo object 
   myServoWindow.attach(Dwindow);  // attaches the servo on GIO2 to the servo object 
   rtc.begin();
@@ -356,20 +355,27 @@ void setup()
 
 
 
-void processTimer(uint8_t Dpin, int stt1, int Vpin, int stt2, timeType timeP){
+void processTimer(uint8_t Dpin, int stt1, int Vpin, int stt2){
   digitalWrite(Dpin, stt1);
   Blynk.virtualWrite(Vpin, stt2);
-  timeP.hh = timeP.mm = -1;
 }
 void myTimerEvent(){
   currentTime.hh = hour();
   currentTime.mm = minute();
   for (int i = 0 ; i < n; i ++){
    if ( currentTime.hh == timeInputStart[i].hh && currentTime.mm == timeInputStart[i].mm )
-      processTimer(Dpin[i], LOW, Vpin[i], LOW, timeInputStart[i]);
+    {
+      processTimer(Dpin[i], LOW, Vpin[i], LOW);
+      timeInputStart[i].hh = -1;
+      timeInputStart[i].mm = -1;
+      Blynk.virtualWrite(V40,((String(i) +"Begin.hh: "+String(timeInputStart[i].hh)+" Begin.mm: "+String(timeInputStart[i].mm))));
+    }
    if ( currentTime.hh == timeInputStop[i].hh && currentTime.mm == timeInputStop[i].mm )
    {
-      processTimer(Dpin[i], HIGH, Vpin[i], HIGH, timeInputStop[i]);
+      processTimer(Dpin[i], HIGH, Vpin[i], HIGH);
+      timeInputStop[i].hh = -1;
+      timeInputStop[i].mm = -1;
+      Blynk.virtualWrite(V40,((String(i) +"Stop.hh: "+String(timeInputStop[i].hh)+" Stop.mm: "+String(timeInputStop[i].mm))));
       Blynk.virtualWrite(VdisplayTimer[i]," ");
    }
       
@@ -387,16 +393,20 @@ void checkStt() {
   "%. \Light in Living Room\: " +stt[x[0]] +". \Light in Kitchen\: " +stt[x[2]] +  "%. \Lights in Bedroom\: " +stt[x[1]] +   "%. \Lights in Bath Room\: " +stt[x[3]] +
   ". \Fan\: "+stt[y[0]]+ ". \Heater\: " + stt[y[1]] + ". \Air conditioner\: " + stt[y[2]] + ". \The door is\ " + state[z[0]] + ". \The window is\ " + state[z[1]];  
 }
+BLYNK_WRITE(VlightRes) {
+  lightThresh = asInt;
+
+}
 
 void lightProcess() {
   int lightStatus = analogRead(lightSensor);
-  Serial.println(lightStatus); 
-  if (lightStatus < 300) {
+  Blynk.virtualWrite(VlightDisplay,lightStatus);
+  if (lightStatus < lightThresh) {
     digitalWrite(DledYard,LOW);
     Blynk.virtualWrite(VledYard,LOW);
   }
   else {
-    digitalWrite(D4,HIGH);
+    digitalWrite(DledYard,HIGH);
     Blynk.virtualWrite(VledYard,HIGH);
   }
 }
